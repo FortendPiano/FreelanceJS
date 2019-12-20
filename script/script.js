@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Таблица
     const ordersTable = document.getElementById('orders');
+    const headTable = document.getElementById('headTable');
 
     // Модальные окна
     const modalOrder = document.getElementById('order_read'),
@@ -24,28 +25,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const toStorage = () => {
         localStorage.setItem('freeOrders', JSON.stringify(orders));
-    }
-
-    // 2. Реализовать вывод количества дней оставшиеся до дедлайна,
-    //  в таблице и в модальном окне
-    // 3. К количеству дней добавить слово день и чтобы оно склонялось:
-    //  день, дней, дня
+    }              
+    
+    const declOfNum = (number, titles) => 
+        number + ' ' + titles[(number % 100 > 4 && number % 100 < 20) ?
+        2 : [2, 0, 1, 1, 1, 2][(number % 10 < 5) ? number % 10 : 5]];
 
     const calcDeadline = (deadline) => {
         let t = Date.parse(deadline) - Date.parse(new Date()),
-            day = Math.floor((t / 1000 / 60 / 60 / 24));
+            day = Math.floor((t / 1000 / 60 / 60));
         
-        console.log(day);
-        const reference = ['день', 'дней', 'дня'];
-        if (day === 1 || (day % 10 === 1 && day !== 11)) {
-            return day + ' ' + reference[0];
-        } else if ((day >= 5 && day < 21) || 
-        (day % 10 >= 5 && day % 10 <= 9) ||
-        day % 10 === 0 || day === 0) {
-            return day + ' ' + reference[1];
-        } else {
-            return day + ' ' + reference[2];
+        if(day / 24 > 2) {
+            return declOfNum(Math.floor(day / 24), ['день', 'дня', 'дней']);
         }
+        return declOfNum(day, ['час', 'часа', 'часов']);
     }
 
     const renderOrders = () => {
@@ -126,6 +119,30 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.addEventListener('click', handlerModal);
     };
 
+    const sortOrder = (arr, property) => {
+        arr.sort((a, b) => a[property] > b[property] ? 1 : -1);
+    }
+
+    headTable.addEventListener('click', (event) => {
+        const target = event.target;
+
+        if(target.classList.contains('head-sort')) {
+            if(target.id === 'taskSort') {
+                sortOrder(orders, 'title');
+            }
+
+            if(target.id === 'currencySort') {
+                sortOrder(orders, 'currency');
+            }
+
+            if(target.id === 'deadlineSort') {
+                sortOrder(orders, 'deadline');
+            }
+            toStorage();
+            renderOrders();
+        }
+    });
+
     ordersTable.addEventListener('click', (event) => {
         const target = event.target;
         const targetOrder = target.closest('.order');
@@ -137,6 +154,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     customer.addEventListener('click', () => {
         blockCustomer.style.display = 'block';
+        const toDay = new Date().toISOString().substring(0, 10);
+        document.getElementById('deadline').min = toDay;
         blockChoice.style.display = 'none';
         btnExit.style.display = 'block';
     });
